@@ -1,29 +1,67 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE_NAME = "product-api:ci"
+        CONTAINER_NAME = "product-api-test"
+        PORT = "5050"
+    }
+
     stages {
 
         stage('Checkout') {
             steps {
-                git url: 'YOUR_REPO_URL', branch: 'main'
+                echo 'Cloning repository from Jenkins SCM...'
+                checkout scm
             }
         }
 
         stage('Build Docker Image') {
             steps {
-                sh 'docker build -t product-api:latest -f docker/Dockerfile .'
+                echo 'Building Docker image...'
+                sh '''
+                docker build -t $IMAGE_NAME -f docker/Dockerfile .
+                '''
             }
         }
 
         stage('Run Container Test') {
             steps {
+                echo 'Starting test container...'
                 sh '''
-                docker rm -f test-container || true
-                docker run -d -p 5050:5000 --name test-container product-api:latest
-                sleep 5
-                curl -f http://localhost:5050/health
+                docker rm -f $CONTAINER_NAME || true
+                docker run -d -p $PORT:5000 --name $CONTAINER_NAME $IMAGE_NAME
                 '''
             }
+        }
+
+        stage('Health Check') {
+            steps {
+                echo 'Waiting for API to boot...'
+                sh 'sleep 6'
+
+                echo 'Checking health endpoint...'
+                sh '''
+                curl -f http://localhost:$PORT/health
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo 'Cleaning up test container...'
+            sh '''
+            docker rm -f $CONTAINER_NAME || true
+            '''
+        }
+
+        success {
+            echo 'Pipeline completed successfully 🎉'
+        }
+
+        failure {
+            echo 'Pipeline failed ❌'
         }
     }
 }
