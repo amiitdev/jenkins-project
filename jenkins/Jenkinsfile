@@ -1,6 +1,10 @@
 pipeline {
     agent any
 
+    triggers {
+        pollSCM('* * * * *')  // Poll every minute
+    }
+
     environment {
         IMAGE_NAME = "product-api:ci"
         CONTAINER_NAME = "product-api-test"
@@ -65,3 +69,4 @@ pipeline {
         }
     }
 }
+// force rebuild - Fri Feb 13 03:03:46 PM IST 2026
