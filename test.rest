@@ -1,2 +1,14 @@
 ### Health Check
 GET http://localhost:5000/health
+
+### create product
+POST http://localhost:5000/products
+Content-Type: application/json
+
+{
+    "name":"Laptop",
+    "price":"50000"
+}
+
+### Get products 
+GET http://localhost:5000/products
