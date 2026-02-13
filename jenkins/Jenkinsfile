@@ -1,52 +1,36 @@
 pipeline {
     agent any
 
-    triggers {
-        pollSCM('* * * * *')  // Poll every minute
-    }
-
-    environment {
-        IMAGE_NAME = "product-api:ci"
-        CONTAINER_NAME = "product-api-test"
-        PORT = "5050"
-    }
-
     stages {
 
         stage('Checkout') {
             steps {
-                echo 'Cloning repository from Jenkins SCM...'
                 checkout scm
             }
         }
 
-        stage('Build Docker Image') {
+        stage('Start Services (API + Mongo)') {
             steps {
-                echo 'Building Docker image...'
                 sh '''
-                docker build -t $IMAGE_NAME -f docker/Dockerfile .
+                docker compose down || true
+                docker compose up -d --build
                 '''
             }
         }
 
-        stage('Run Container Test') {
+        stage('Wait For API') {
             steps {
-                echo 'Starting test container...'
                 sh '''
-                docker rm -f $CONTAINER_NAME || true
-                docker run -d -p $PORT:5000 --name $CONTAINER_NAME $IMAGE_NAME
+                echo "Waiting for API to boot..."
+                sleep 10
                 '''
             }
         }
 
         stage('Health Check') {
             steps {
-                echo 'Waiting for API to boot...'
-                sh 'sleep 6'
-
-                echo 'Checking health endpoint...'
                 sh '''
-                curl -f http://localhost:$PORT/health
+                curl -f http://localhost:5000/health
                 '''
             }
         }
@@ -54,19 +38,7 @@ pipeline {
 
     post {
         always {
-            echo 'Cleaning up test container...'
-            sh '''
-            docker rm -f $CONTAINER_NAME || true
-            '''
-        }
-
-        success {
-            echo 'Pipeline completed successfully 🎉'
-        }
-
-        failure {
-            echo 'Pipeline failed ❌'
+            sh 'docker compose down'
         }
     }
 }
-// force rebuild - Fri Feb 13 03:03:46 PM IST 2026
