@@ -1,0 +1,9 @@
+node_modules
+.env
+*.log
+dist
+coverage
+.vscode
+Dockerfile.local
+notes.txt
+flowchart.txt
