@@ -12,3 +12,7 @@ Content-Type: application/json
 
 ### Get products 
 GET http://localhost:5000/products
+
+### jenkins url
+GET http://localhost:8080
+ 

@@ -1,0 +1,29 @@
+pipeline {
+    agent any
+
+    stages {
+
+        stage('Checkout') {
+            steps {
+                git url: 'YOUR_REPO_URL', branch: 'main'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t product-api:latest -f docker/Dockerfile .'
+            }
+        }
+
+        stage('Run Container Test') {
+            steps {
+                sh '''
+                docker rm -f test-container || true
+                docker run -d -p 5050:5000 --name test-container product-api:latest
+                sleep 5
+                curl -f http://localhost:5050/health
+                '''
+            }
+        }
+    }
+}
